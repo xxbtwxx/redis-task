@@ -27,11 +27,21 @@ func NewManager(
 	consumersListManager consumersListManager,
 	processor processor,
 ) (*consumerManager, error) {
+	consumerManager := &consumerManager{
+		wg:                   &sync.WaitGroup{},
+		consumersListManager: consumersListManager,
+	}
+
 	consumers := []*consumer{}
 
 	errs := make([]error, 0, cfg.Count)
 	for range cfg.Count {
-		consumer := newConsumer(uuid.NewString(), msgProvider, processor)
+		consumerUUID := uuid.NewString()
+		consumer := newConsumer(
+			consumerUUID,
+			msgProvider,
+			processor,
+		)
 		err := consumersListManager.Add(context.Background(), consumer.id)
 		if err != nil {
 			errs = append(errs, err)
@@ -53,26 +63,23 @@ func NewManager(
 		return nil, errors.Join(errs...)
 	}
 
-	return &consumerManager{
-		consumers:            consumers,
-		wg:                   &sync.WaitGroup{},
-		consumersListManager: consumersListManager,
-	}, nil
+	consumerManager.consumers = consumers
+	return consumerManager, nil
 }
 
 func (cm *consumerManager) Start() {
 	for _, consumer := range cm.consumers {
 		cm.wg.Add(1)
-		consumer.Consume(cm.consumerDoneCallback)
+		consumer.Consume(cm.wg.Done)
 	}
-}
-
-func (cm *consumerManager) consumerDoneCallback(id string) error {
-	defer log.Debug().Msgf("removed consumer: %s", id)
-	defer cm.wg.Done()
-	return cm.consumersListManager.Remove(context.Background(), id)
 }
 
 func (cm *consumerManager) Teardown() {
 	cm.wg.Wait()
+	for _, consumer := range cm.consumers {
+		err := cm.consumersListManager.Remove(context.Background(), consumer.id)
+		if err != nil {
+			log.Error().Err(err).Msgf("failed to remove consumer %s", consumer.id)
+		}
+	}
 }

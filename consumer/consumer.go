@@ -1,3 +1,5 @@
+//go:generate mockgen -source=$GOFILE -destination=consumer_mock.go -package=consumer -exclude_interfaces=messageProvider
+
 package consumer
 
 import (
@@ -20,7 +22,11 @@ type consumer struct {
 	processor       processor
 }
 
-func newConsumer(id string, msgProvider messageProvider, processor processor) *consumer {
+func newConsumer(
+	id string,
+	msgProvider messageProvider,
+	processor processor,
+) *consumer {
 	return &consumer{
 		id:              id,
 		messageProvider: msgProvider,
@@ -28,7 +34,7 @@ func newConsumer(id string, msgProvider messageProvider, processor processor) *c
 	}
 }
 
-func (c *consumer) Consume(doneCallback func(id string) error) {
+func (c *consumer) Consume(doneCallback func()) {
 	go func() {
 		for msg := range c.messageProvider.Messages() {
 			err := c.processor.Process(context.Background(), c.id, msg)
@@ -37,9 +43,6 @@ func (c *consumer) Consume(doneCallback func(id string) error) {
 			}
 		}
 
-		err := doneCallback(c.id)
-		if err != nil {
-			log.Error().Err(err).Msgf("failed to execute consumer %s done callback", c.id)
-		}
+		doneCallback()
 	}()
 }

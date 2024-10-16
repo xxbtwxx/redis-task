@@ -1,4 +1,3 @@
-version: '3.8'
 services:
   redis-server:
     image: redis/redis-stack-server:latest
@@ -33,7 +32,7 @@ services:
       - redis-task
     attach: false
 
-  graphana:
+  grafana:
     image: grafana/grafana-enterprise
     network_mode: host
     volumes:

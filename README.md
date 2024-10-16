@@ -1,4 +1,4 @@
-# Redis task solution
+# Redis task implementation
 
 A simple service for consuming and "processing" messages 
 received from a Redis Pub/Sub
@@ -8,7 +8,7 @@ With the current setup each consumer can "process" ~3 messages per second
 
 # Running the service
 
-The service and all of it's dependencies can be ran using `docker compose up`
+The service and all of it's dependencies can be run using `make`
 This will spin 
 `redis-server` on port `6379`
 `redis-insight` on port `5540`
@@ -25,3 +25,9 @@ Some basic panels are already preconfigured in `grafana`
 They include total number of "processed" messages, "processed" messages per consumer
 and the time needed to "process" a message
 The credentials are `user`/`password`
+
+# Testing
+
+The tests can be executed by calling `make test` 
+Test coverage seems pretty low when looking at the `make test` output but if you
+examine it using the `cover` tool it looks way better
