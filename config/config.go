@@ -9,6 +9,7 @@ import (
 type Config struct {
 	Redis     *Redis     `yaml:"redis"`
 	Consumers *Consumers `yaml:"consumers"`
+	Processor *Processor `yaml:"processor"`
 }
 
 func Load(path string) (*Config, error) {

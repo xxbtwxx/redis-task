@@ -10,3 +10,7 @@ type Consumers struct {
 	Count    int    `yaml:"count"`
 	ListName string `yaml:"list_name"`
 }
+
+type Processor struct {
+	ProcessedEventsStream string `yaml:"processed_events_stream"`
+}

@@ -4,5 +4,8 @@ redis:
   channel: "messages:published"
 
 consumers:
-  count: 2
+  count: 4
   list_name: "consumer:ids"
+
+processor:
+  processed_events_stream: "messages:processed"

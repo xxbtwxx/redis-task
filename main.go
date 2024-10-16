@@ -6,6 +6,7 @@ import (
 	"os/signal"
 	"redis-task/config"
 	"redis-task/consumer"
+	"redis-task/metrics"
 	"redis-task/processor"
 	"redis-task/redis"
 	"syscall"
@@ -16,6 +17,8 @@ import (
 func main() {
 	shutdownSig := make(chan os.Signal, 1)
 	signal.Notify(shutdownSig, syscall.SIGINT, syscall.SIGTERM, syscall.SIGTSTP)
+
+	metrics.ListenAndServe()
 
 	teardowns := []func(){}
 	defer func() {
@@ -39,7 +42,7 @@ func main() {
 	pubsub := redisClient.Subscribe(context.Background(), cfg.Redis.Channel)
 	teardowns = append(teardowns, pubsub.Teardown)
 
-	processedMsgStream := redisClient.Stream("messages:processed")
+	processedMsgStream := redisClient.Stream(cfg.Processor.ProcessedEventsStream)
 	processor := processor.New(processedMsgStream)
 
 	consumerListManager := redisClient.List(cfg.Consumers.ListName)

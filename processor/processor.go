@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"math/rand/v2"
+	"redis-task/metrics"
 	"time"
 
 	"github.com/google/uuid"
@@ -40,7 +41,7 @@ func (p *processor) Process(ctx context.Context, consumerID, rawMsg string) erro
 		return err
 	}
 
-	_ = processDuration
+	metrics.ObserveProcessingTimes(consumerID, processDuration.Seconds())
 
 	return nil
 }
