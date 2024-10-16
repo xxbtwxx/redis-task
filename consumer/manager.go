@@ -25,12 +25,13 @@ func NewManager(
 	cfg *config.Consumers,
 	msgProvider messageProvider,
 	consumersListManager consumersListManager,
+	processor processor,
 ) (*consumerManager, error) {
 	consumers := []*consumer{}
 
 	errs := make([]error, 0, cfg.Count)
 	for range cfg.Count {
-		consumer := newConsumer(uuid.NewString(), msgProvider)
+		consumer := newConsumer(uuid.NewString(), msgProvider, processor)
 		err := consumersListManager.Add(context.Background(), consumer.id)
 		if err != nil {
 			errs = append(errs, err)

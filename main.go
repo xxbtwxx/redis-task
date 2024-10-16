@@ -6,6 +6,7 @@ import (
 	"os/signal"
 	"redis-task/config"
 	"redis-task/consumer"
+	"redis-task/processor"
 	"redis-task/redis"
 	"syscall"
 
@@ -38,8 +39,11 @@ func main() {
 	pubsub := redisClient.Subscribe(context.Background(), cfg.Redis.Channel)
 	teardowns = append(teardowns, pubsub.Teardown)
 
+	processedMsgStream := redisClient.Stream("messages:processed")
+	processor := processor.New(processedMsgStream)
+
 	consumerListManager := redisClient.List(cfg.Consumers.ListName)
-	consumerManager, err := consumer.NewManager(cfg.Consumers, pubsub, consumerListManager)
+	consumerManager, err := consumer.NewManager(cfg.Consumers, pubsub, consumerListManager, processor)
 	if err != nil {
 		log.Fatal().Err(err).Msg("consumer manager initialization failed")
 	}
