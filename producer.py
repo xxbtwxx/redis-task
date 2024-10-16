@@ -6,8 +6,8 @@ import redis
 # Redis connection details (modify host and port if needed)
 redis_host = "localhost"
 redis_port = 6379
-target_duration = timedelta(minutes=1)
-batch_size = 100
+target_duration = timedelta(seconds=2)
+batch_size = 1000
 
 def publisher():
     try:

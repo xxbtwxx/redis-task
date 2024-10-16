@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"os"
 	"os/signal"
 	"redis-task/config"
@@ -23,12 +24,11 @@ func main() {
 	if err != nil {
 		log.Fatal().Err(err).Msg("failed to connect to redis")
 	}
-	defer func() {
-		err := redisClient.Teardown()
-		if err != nil {
-			log.Error().Err(err).Msg("failed to teardown redis client")
-		}
-	}()
+	defer redisClient.Teardown()
+
+	pubsub := redisClient.Subscribe(context.Background(), cfg.Redis.Channel)
+
+	_ = pubsub
 
 	<-shutdownSig
 }
