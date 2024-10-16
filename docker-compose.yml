@@ -1,0 +1,49 @@
+version: '3.8'
+services:
+  redis-server:
+    image: redis/redis-stack-server:latest
+    network_mode: host
+    container_name: redis-server
+    attach: false
+
+  redis-insight:
+    image: redis/redisinsight:latest
+    network_mode: host
+    container_name: redis-insight
+    attach: false
+    depends_on:
+      - redis-server
+
+  redis-task:
+    network_mode: host
+    build:
+      context: .
+      dockerfile: service.Dockerfile
+    container_name: redis-task
+    depends_on:
+      - redis-server
+
+  prometheus:
+    image: prom/prometheus
+    network_mode: host
+    volumes:
+      - ./prometheus/prometheus.yml:/etc/prometheus/prometheus.yml
+    container_name: prometheus
+    depends_on:
+      - redis-task
+    attach: false
+
+  graphana:
+    image: grafana/grafana-enterprise
+    network_mode: host
+    volumes:
+      - ./grafana/dashboard.yaml:/etc/grafana/provisioning/dashboards/dashboard.yaml
+      - ./grafana/dashboards:/var/lib/grafana/dashboards
+      - ./grafana/datasources:/etc/grafana/provisioning/datasources
+      - ./grafana/custom.ini:/etc/grafana/custom.ini
+    environment:
+      - GF_PATHS_CONFIG=/etc/grafana/custom.ini
+    container_name: graphana
+    depends_on:
+      - prometheus
+    attach: false
