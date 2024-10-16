@@ -20,12 +20,12 @@ func newConsumer(id string, msgProvider messageProvider) *consumer {
 	}
 }
 
-func (c *consumer) Consume(doneCallback func()) {
+func (c *consumer) Consume(doneCallback func(id string) error) {
 	go func() {
 		for msg := range c.messageProvider.Messages() {
 			fmt.Printf("%s consumed %s\n", c.id, msg)
 		}
 
-		doneCallback()
+		doneCallback(c.id)
 	}()
 }

@@ -34,13 +34,19 @@ func main() {
 	if err != nil {
 		log.Fatal().Err(err).Msg("failed to connect to redis")
 	}
-	teardowns = append(teardowns, redisClient.Teardown)
 
 	pubsub := redisClient.Subscribe(context.Background(), cfg.Redis.Channel)
+	teardowns = append(teardowns, pubsub.Teardown)
 
-	consumerManager := consumer.NewManager(cfg.Consumers, pubsub)
+	consumerListManager := redisClient.List(cfg.Consumers.ListName)
+	consumerManager, err := consumer.NewManager(cfg.Consumers, pubsub, consumerListManager)
+	if err != nil {
+		log.Fatal().Err(err).Msg("consumer manager initialization failed")
+	}
+
 	consumerManager.Start()
 	teardowns = append(teardowns, consumerManager.Teardown)
+	teardowns = append(teardowns, redisClient.Teardown)
 
 	<-shutdownSig
 }

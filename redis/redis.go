@@ -10,8 +10,7 @@ import (
 )
 
 type client struct {
-	redis   *redis.Client
-	closers map[string]func() error
+	redis *redis.Client
 }
 
 func New(cfg *config.Redis) (*client, error) {
@@ -27,19 +26,11 @@ func New(cfg *config.Redis) (*client, error) {
 	}
 
 	return &client{
-		redis:   redisClient,
-		closers: map[string]func() error{},
+		redis: redisClient,
 	}, nil
 }
 
 func (c *client) Teardown() {
-	for closer, f := range c.closers {
-		err := f()
-		if err != nil {
-			log.Error().Err(err).Msgf("failed to close %s", closer)
-		}
-	}
-
 	err := c.redis.Close()
 	if err != nil {
 		log.Error().Err(err).Msg("failed to close redis connection")

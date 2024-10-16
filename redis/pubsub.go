@@ -16,7 +16,6 @@ type pubsub struct {
 func (c *client) Subscribe(ctx context.Context, channels ...string) *pubsub {
 	pubsubUUID := uuid.NewString()
 	redisPubSub := c.redis.Subscribe(ctx, channels...)
-	c.closers[pubsubUUID] = redisPubSub.Close
 
 	log.Info().Msgf("created pubsub with id: %s", pubsubUUID)
 
@@ -33,5 +32,12 @@ func (p *pubsub) Messages() func(func(string) bool) {
 				return
 			}
 		}
+	}
+}
+
+func (p *pubsub) Teardown() {
+	err := p.pubsub.Close()
+	if err != nil {
+		log.Error().Err(err).Msgf("failed to close pubsub: %s", p.id)
 	}
 }

@@ -5,3 +5,4 @@ redis:
 
 consumers:
   count: 2
+  list_name: "consumer:ids"

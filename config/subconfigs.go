@@ -7,5 +7,6 @@ type Redis struct {
 }
 
 type Consumers struct {
-	Count int `yaml:"count"`
+	Count    int    `yaml:"count"`
+	ListName string `yaml:"list_name"`
 }
