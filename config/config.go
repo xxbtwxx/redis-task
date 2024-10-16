@@ -10,6 +10,7 @@ type Config struct {
 	Redis     *Redis     `yaml:"redis"`
 	Consumers *Consumers `yaml:"consumers"`
 	Processor *Processor `yaml:"processor"`
+	Log       *Log       `yaml:"log"`
 }
 
 func Load(path string) (*Config, error) {

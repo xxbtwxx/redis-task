@@ -1,6 +1,6 @@
 .PHONY: run
 run:
-	docker compose up
+	docker compose up --build redis-task
 
 .PHONY: test
 test:

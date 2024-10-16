@@ -27,29 +27,23 @@ func NewManager(
 	consumersListManager consumersListManager,
 	processor processor,
 ) (*consumerManager, error) {
-	consumerManager := &consumerManager{
-		wg:                   &sync.WaitGroup{},
-		consumersListManager: consumersListManager,
-	}
-
+	errs := make([]error, 0, cfg.Count)
 	consumers := []*consumer{}
 
-	errs := make([]error, 0, cfg.Count)
 	for range cfg.Count {
-		consumerUUID := uuid.NewString()
 		consumer := newConsumer(
-			consumerUUID,
+			uuid.NewString(),
 			msgProvider,
 			processor,
 		)
+
 		err := consumersListManager.Add(context.Background(), consumer.id)
 		if err != nil {
 			errs = append(errs, err)
+			continue
 		}
 
 		consumers = append(consumers, consumer)
-
-		log.Debug().Msgf("started consumer: %s", consumer.id)
 	}
 
 	if len(errs) != 0 {
@@ -63,8 +57,11 @@ func NewManager(
 		return nil, errors.Join(errs...)
 	}
 
-	consumerManager.consumers = consumers
-	return consumerManager, nil
+	return &consumerManager{
+		wg:                   &sync.WaitGroup{},
+		consumersListManager: consumersListManager,
+		consumers:            consumers,
+	}, nil
 }
 
 func (cm *consumerManager) Start() {

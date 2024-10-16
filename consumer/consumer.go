@@ -8,13 +8,15 @@ import (
 	"github.com/rs/zerolog/log"
 )
 
-type messageProvider interface {
-	Messages() func(func(string) bool)
-}
+type (
+	messageProvider interface {
+		Messages() func(func(string) bool)
+	}
 
-type processor interface {
-	Process(context.Context, string, string) error
-}
+	processor interface {
+		Process(context.Context, string, string) error
+	}
+)
 
 type consumer struct {
 	id              string
@@ -36,10 +38,11 @@ func newConsumer(
 
 func (c *consumer) Consume(doneCallback func()) {
 	go func() {
+		log.Debug().Msgf("started consumer: %s", c.id)
 		for msg := range c.messageProvider.Messages() {
 			err := c.processor.Process(context.Background(), c.id, msg)
 			if err != nil {
-				log.Error().Err(err).Msgf("failed to process message")
+				log.Error().Err(err).Str("consumer id", c.id).Msg("failed to process message")
 			}
 		}
 

@@ -16,7 +16,16 @@ type Metrics struct {
 
 var metrics *Metrics
 
-func init() {
+func ObserveProcessingTimes(consumerID string, processingTime float64) {
+	histogram, err := metrics.processingStats.GetMetricWithLabelValues(consumerID)
+	if err != nil {
+		log.Error().Err(err).Msg("Failed finding counter with given labels")
+		return
+	}
+	histogram.Observe(processingTime)
+}
+
+func Expose() {
 	metrics = &Metrics{
 		processingStats: promauto.NewHistogramVec(
 			prometheus.HistogramOpts{
@@ -28,24 +37,15 @@ func init() {
 			[]string{"consumer_id"},
 		),
 	}
+
+	go listenAndServe()
 }
 
-func ObserveProcessingTimes(consumerID string, processingTime float64) {
-	histogram, err := metrics.processingStats.GetMetricWithLabelValues(consumerID)
+func listenAndServe() {
+	http.Handle("/metrics", promhttp.Handler())
+	err := http.ListenAndServe(":2112", nil)
 	if err != nil {
-		log.Error().Err(err).Msg("Failed finding counter with given labels")
-		return
+		log.Error().Err(err).Msg("failed to start metrics handler")
+		os.Exit(1)
 	}
-	histogram.Observe(processingTime)
-}
-
-func ListenAndServe() {
-	go func() {
-		http.Handle("/metrics", promhttp.Handler())
-		err := http.ListenAndServe(":2112", nil)
-		if err != nil {
-			log.Error().Err(err).Msg("failed to start metrics handler")
-			os.Exit(1)
-		}
-	}()
 }

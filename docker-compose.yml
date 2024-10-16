@@ -18,6 +18,7 @@ services:
     build:
       context: .
       dockerfile: service.Dockerfile
+      no_cache: true
     container_name: redis-task
     depends_on:
       - redis-server

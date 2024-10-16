@@ -13,14 +13,17 @@ import (
 
 	_ "net/http/pprof"
 
+	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
 )
 
 func main() {
+	zerolog.TimeFieldFormat = zerolog.TimeFormatUnix
+
 	shutdownSig := make(chan os.Signal, 1)
 	signal.Notify(shutdownSig, syscall.SIGINT, syscall.SIGTERM, syscall.SIGTSTP)
 
-	metrics.ListenAndServe()
+	metrics.Expose()
 
 	teardowns := []func(){}
 	defer func() {
@@ -35,6 +38,13 @@ func main() {
 	if err != nil {
 		log.Fatal().Err(err).Msg("failed to load config")
 	}
+
+	logLevel, err := zerolog.ParseLevel(cfg.Log.Level)
+	if err != nil {
+		log.Error().Err(err).Msgf("failed to parse log level: %s, defaulting to `debug`", cfg.Log.Level)
+		logLevel = zerolog.DebugLevel
+	}
+	zerolog.SetGlobalLevel(logLevel)
 
 	redisClient, err := redis.New(cfg.Redis)
 	if err != nil {
