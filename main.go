@@ -11,6 +11,8 @@ import (
 	"redis-task/redis"
 	"syscall"
 
+	_ "net/http/pprof"
+
 	"github.com/rs/zerolog/log"
 )
 
