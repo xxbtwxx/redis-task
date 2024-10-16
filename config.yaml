@@ -11,4 +11,4 @@ processor:
   processed_events_stream: "messages:processed"
 
 log:
-  level: "info"
+  level: "debug"

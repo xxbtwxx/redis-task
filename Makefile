@@ -1,6 +1,8 @@
 .PHONY: run
 run:
-	docker compose up --build redis-task
+	docker compose up -d
+	-go run main.go; \
+	docker compose down
 
 .PHONY: test
 test:

@@ -21,7 +21,15 @@ func main() {
 	zerolog.TimeFieldFormat = zerolog.TimeFormatUnix
 
 	shutdownSig := make(chan os.Signal, 1)
-	signal.Notify(shutdownSig, syscall.SIGINT, syscall.SIGTERM, syscall.SIGTSTP)
+	signal.Notify(shutdownSig)
+	wait := make(chan struct{}, 1)
+
+	ctx, cancel := context.WithCancel(context.Background())
+	go func() {
+		<-shutdownSig
+		cancel()
+		wait <- struct{}{}
+	}()
 
 	metrics.Expose()
 
@@ -48,10 +56,11 @@ func main() {
 
 	redisClient, err := redis.New(cfg.Redis)
 	if err != nil {
-		log.Fatal().Err(err).Msg("failed to connect to redis")
+		log.Error().Err(err).Msg("failed to connect to redis")
+		shutdownSig <- syscall.SIGABRT
 	}
 
-	pubsub := redisClient.Subscribe(context.Background(), cfg.Redis.Channel)
+	pubsub := redisClient.Subscribe(ctx, cfg.Redis.Channel)
 	teardowns = append(teardowns, pubsub.Teardown)
 
 	processedMsgStream := redisClient.Stream(cfg.Processor.ProcessedEventsStream)
@@ -60,12 +69,12 @@ func main() {
 	consumerListManager := redisClient.List(cfg.Consumers.ListName)
 	consumerManager, err := consumer.NewManager(cfg.Consumers, pubsub, consumerListManager, processor)
 	if err != nil {
-		log.Fatal().Err(err).Msg("consumer manager initialization failed")
+		log.Error().Err(err).Msg("consumer manager initialization failed")
+		shutdownSig <- syscall.SIGABRT
 	}
 
 	consumerManager.Start()
-	teardowns = append(teardowns, consumerManager.Teardown)
-	teardowns = append(teardowns, redisClient.Teardown)
+	teardowns = append(teardowns, consumerManager.Teardown, redisClient.Teardown)
 
-	<-shutdownSig
+	<-wait
 }

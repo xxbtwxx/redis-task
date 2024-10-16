@@ -2,34 +2,42 @@ package redis
 
 import (
 	"context"
+	"strings"
 
-	"github.com/google/uuid"
 	"github.com/redis/go-redis/v9"
 	"github.com/rs/zerolog/log"
 )
 
 type pubsub struct {
+	ctx    context.Context
 	id     string
 	pubsub *redis.PubSub
 }
 
 func (c *client) Subscribe(ctx context.Context, channels ...string) *pubsub {
-	pubsubUUID := uuid.NewString()
 	redisPubSub := c.redis.Subscribe(ctx, channels...)
-
-	log.Info().Msgf("created pubsub with id: %s", pubsubUUID)
+	log.Debug().Msgf("created pubsub for channels: %s", strings.Join(channels, ", "))
 
 	return &pubsub{
-		id:     pubsubUUID,
+		ctx:    ctx,
 		pubsub: redisPubSub,
 	}
 }
 
 func (p *pubsub) Messages() func(func(string) bool) {
 	return func(yield func(string) bool) {
-		for msg := range p.pubsub.Channel() {
-			if !yield(msg.Payload) {
+		for {
+			select {
+			case <-p.ctx.Done():
 				return
+			case msg, ok := <-p.pubsub.Channel():
+				if !ok {
+					return
+				}
+
+				if !yield(msg.Payload) {
+					return
+				}
 			}
 		}
 	}

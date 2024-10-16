@@ -3,23 +3,11 @@ services:
     image: redis/redis-stack-server:latest
     network_mode: host
     container_name: redis-server
-    attach: false
 
   redis-insight:
     image: redis/redisinsight:latest
     network_mode: host
     container_name: redis-insight
-    attach: false
-    depends_on:
-      - redis-server
-
-  redis-task:
-    network_mode: host
-    build:
-      context: .
-      dockerfile: service.Dockerfile
-      no_cache: true
-    container_name: redis-task
     depends_on:
       - redis-server
 
@@ -29,9 +17,6 @@ services:
     volumes:
       - ./prometheus/prometheus.yml:/etc/prometheus/prometheus.yml
     container_name: prometheus
-    depends_on:
-      - redis-task
-    attach: false
 
   grafana:
     image: grafana/grafana-enterprise
@@ -43,7 +28,6 @@ services:
       - ./grafana/custom.ini:/etc/grafana/custom.ini
     environment:
       - GF_PATHS_CONFIG=/etc/grafana/custom.ini
-    container_name: graphana
+    container_name: grafana
     depends_on:
       - prometheus
-    attach: false

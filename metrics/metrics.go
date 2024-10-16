@@ -16,8 +16,8 @@ type Metrics struct {
 
 var metrics *Metrics
 
-func ObserveProcessingTimes(consumerID string, processingTime float64) {
-	histogram, err := metrics.processingStats.GetMetricWithLabelValues(consumerID)
+func ObserveProcessingTimes(consumerID, state string, processingTime float64) {
+	histogram, err := metrics.processingStats.GetMetricWithLabelValues(consumerID, state)
 	if err != nil {
 		log.Error().Err(err).Msg("Failed finding counter with given labels")
 		return
@@ -34,7 +34,7 @@ func Expose() {
 				Name:      "message_process_time",
 				Help:      "Processing times",
 			},
-			[]string{"consumer_id"},
+			[]string{"consumer_id", "state"},
 		),
 	}
 
