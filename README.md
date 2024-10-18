@@ -29,5 +29,3 @@ The credentials are `user`/`password`
 # Testing
 
 The tests can be executed by calling `make test` 
-Test coverage seems pretty low when looking at the `make test` output but if you
-examine it using the `cover` tool it looks way better

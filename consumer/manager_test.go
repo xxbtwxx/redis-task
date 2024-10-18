@@ -86,11 +86,23 @@ func TestManager(t *testing.T) {
 	// give them some time to full consume the messages
 	// before we close the iterators they are reading from
 	time.Sleep(1 * time.Second)
+
+	// add a new manager
+	manager2, err := NewManager(cfg.Consumers, pubSub, list, nil)
+	assert.NoError(t, err)
+
 	pubSub.Teardown()
 	manager.Teardown()
 
 	// ensure that after teardown
 	// we've removed the existing consumers
+	// 2 consumers should be left since we have a second manager
+	llenCmd = rawRedis.LLen(context.Background(), cfg.Consumers.ListName)
+	assert.NoError(t, llenCmd.Err())
+	assert.EqualValues(t, 2, llenCmd.Val())
+
+	manager2.Teardown()
+	// no consumers should be left in the list
 	llenCmd = rawRedis.LLen(context.Background(), cfg.Consumers.ListName)
 	assert.NoError(t, llenCmd.Err())
 	assert.EqualValues(t, 0, llenCmd.Val())
