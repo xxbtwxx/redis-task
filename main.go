@@ -21,7 +21,7 @@ func main() {
 	zerolog.TimeFieldFormat = zerolog.TimeFormatUnix
 
 	shutdownSig := make(chan os.Signal, 1)
-	signal.Notify(shutdownSig)
+	signal.Notify(shutdownSig, syscall.SIGINT, syscall.SIGTERM, syscall.SIGABRT)
 	wait := make(chan struct{}, 1)
 
 	ctx, cancel := context.WithCancel(context.Background())
