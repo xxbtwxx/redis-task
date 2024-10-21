@@ -18,7 +18,7 @@ func TestProcessor_WriteProcessedMsg(t *testing.T) {
 	// metrics are a global obj
 	// and we need them to be initialized
 	// for this test to run
-	metrics.Expose()
+	_ = metrics.New()
 
 	redisClient, err := redis.New(&config.Redis{
 		Address: "127.0.0.1",

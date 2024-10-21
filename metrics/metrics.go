@@ -1,12 +1,8 @@
 package metrics
 
 import (
-	"net/http"
-	"os"
-
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promauto"
-	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/rs/zerolog/log"
 )
 
@@ -25,7 +21,7 @@ func ObserveProcessingTimes(consumerID, state string, processingTime float64) {
 	histogram.Observe(processingTime)
 }
 
-func Expose() {
+func setup() {
 	metrics = &Metrics{
 		processingStats: promauto.NewHistogramVec(
 			prometheus.HistogramOpts{
@@ -36,16 +32,5 @@ func Expose() {
 			},
 			[]string{"consumer_id", "state"},
 		),
-	}
-
-	go listenAndServe()
-}
-
-func listenAndServe() {
-	http.Handle("/metrics", promhttp.Handler())
-	err := http.ListenAndServe(":2112", nil)
-	if err != nil {
-		log.Error().Err(err).Msg("failed to start metrics handler")
-		os.Exit(1)
 	}
 }

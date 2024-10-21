@@ -31,9 +31,12 @@ func main() {
 		wait <- struct{}{}
 	}()
 
-	metrics.Expose()
+	metricsSrv := metrics.New()
+	metricsSrv.Start()
 
-	teardowns := []func(){}
+	teardowns := []func(){
+		metricsSrv.Stop,
+	}
 	defer func() {
 		for _, teardown := range teardowns {
 			if teardown != nil {
